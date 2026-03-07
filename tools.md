@@ -18,7 +18,18 @@ Tools I like but don't load by default. Add here for reference when setting up a
 
 ## CLI Tools
 
-<!-- Add CLI tools here -->
+### Microsoft Work IQ (`workiq`)
+> CLI + MCP server that connects AI assistants to Microsoft 365 Copilot data (emails, meetings, documents, Teams messages, people).
+
+- **Docs:** https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/workiq-overview
+- **Repo:** https://github.com/microsoft/work-iq-mcp
+- **Install:** `npm install -g @microsoft/workiq`
+- **Requires:** Microsoft 365 subscription with Copilot license + admin consent in Entra tenant
+- **Key commands:**
+  - `workiq accept-eula` — accept EULA (required on first use)
+  - `workiq ask -q "<question>"` — query M365 data from terminal
+  - `workiq mcp` — start as MCP server for VS Code / Copilot CLI
+- **Why useful:** Lets agents query workplace context (meetings, emails, docs) directly — no browser needed.
 
 ---
 

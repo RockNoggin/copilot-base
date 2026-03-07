@@ -1,6 +1,12 @@
 # Copilot Instructions
 
-These instructions are automatically loaded by GitHub Copilot as workspace context.
+## About This Repository
+
+This is a personal GitHub Copilot configuration template (`copilot-base`). It provides a starting point for consistent Copilot behavior across new projects. The three main artifacts are:
+
+| Path | Purpose |
+|------|---------|
+`library/` holds reference material (not auto-loaded). `tools.md` tracks useful CLI/MCP tools.
 
 ## General Behavior
 
@@ -14,6 +20,7 @@ These instructions are automatically loaded by GitHub Copilot as workspace conte
 - Follow the conventions already present in the file being edited.
 - Use consistent naming: prefer descriptive names over abbreviations.
 - Prefer explicit over implicit — make intent clear from the code itself.
+- Comments should explain *why* something is done, not *what* the code does.
 
 ## Git
 
