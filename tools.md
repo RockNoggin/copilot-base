@@ -27,7 +27,7 @@ Tools I like but don't load by default. Add here for reference when setting up a
 - **Requires:** Microsoft 365 subscription with Copilot license + admin consent in Entra tenant
 - **Key commands:**
   - `workiq accept-eula` — accept EULA (required on first use)
-  - `workiq ask -q "<question>"` — query M365 data from terminal
+  - `workiq ask [-q "<question>"]` — query M365 data; omit `-q` for interactive mode; use `-t <tenant-id>` for a specific tenant
   - `workiq mcp` — start as MCP server for VS Code / Copilot CLI
 - **Why useful:** Lets agents query workplace context (meetings, emails, docs) directly — no browser needed.
 
