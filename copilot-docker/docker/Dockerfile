@@ -22,8 +22,7 @@ RUN npm install -g @github/copilot@${COPILOT_CLI_VERSION} \
     && npm cache clean --force
 
 # Create non-root user for running Copilot
-RUN useradd -m -s /bin/bash copilot \
-    && echo "copilot ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN useradd -m -s /bin/bash copilot
 
 USER copilot
 WORKDIR /workspace

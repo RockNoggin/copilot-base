@@ -12,6 +12,17 @@
 
 $script:DefaultImage = "copilot-yolo"
 
+function Test-DockerAvailable {
+    try {
+        $null = docker version 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker daemon is not running. Start Docker Desktop and try again."
+        }
+    } catch [System.Management.Automation.CommandNotFoundException] {
+        throw "Docker is not installed or not in PATH. Install Docker Desktop from https://docker.com/products/docker-desktop/"
+    }
+}
+
 function Get-SanitizedName {
     param([string]$Path)
     $name = (Split-Path -Leaf $Path) -replace '[^a-zA-Z0-9_-]', '-'
@@ -42,6 +53,8 @@ function Start-CopilotContainer {
 
         [switch]$Build
     )
+
+    Test-DockerAvailable
 
     if (-not (Test-Path $Workspace)) {
         throw "Workspace path does not exist: $Workspace"
@@ -117,6 +130,8 @@ function Invoke-CopilotBatch {
         $Name = Get-SanitizedName $Workspace
     }
 
+    Test-DockerAvailable
+
     $running = docker ps -q --filter "name=^${Name}$" 2>$null
     if (-not $running) { throw "Container '$Name' is not running. Use Start-CopilotContainer first." }
 
@@ -148,6 +163,8 @@ function Enter-CopilotSession {
         $Name = Get-SanitizedName $Workspace
     }
 
+    Test-DockerAvailable
+
     $running = docker ps -q --filter "name=^${Name}$" 2>$null
     if (-not $running) { throw "Container '$Name' is not running. Use Start-CopilotContainer first." }
 
@@ -175,11 +192,17 @@ function Stop-CopilotContainer {
         $Name = Get-SanitizedName $Workspace
     }
 
+    Test-DockerAvailable
+
     Write-Host "Stopping container '$Name'..." -ForegroundColor Cyan
     $null = docker stop $Name 2>&1
     if ($LASTEXITCODE -eq 0) {
-        docker rm $Name | Out-Null
-        Write-Host "Container '$Name' removed." -ForegroundColor Green
+        docker rm $Name 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Container '$Name' removed." -ForegroundColor Green
+        } else {
+            Write-Warning "Container '$Name' stopped but could not be removed. Run 'docker rm $Name' manually."
+        }
     } else {
         Write-Warning "Container '$Name' was not running or does not exist."
     }

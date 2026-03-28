@@ -22,7 +22,13 @@ Add-Content $PROFILE @'
 
 # GitHub Copilot Docker - YOLO mode module
 Import-Module D:\GIT\copilot-base\copilot-docker\client\copilot.psm1
-if (-not $env:GH_TOKEN) { $env:GH_TOKEN = (gh auth token 2>$null) }
+if (-not $env:GH_TOKEN) {
+    try {
+        $token = gh auth token 2>&1
+        if ($LASTEXITCODE -eq 0 -and $token) { $env:GH_TOKEN = $token }
+        else { Write-Warning "gh CLI not authenticated. Run 'gh auth login'." }
+    } catch { Write-Warning "gh CLI not found." }
+}
 '@
 ```
 
