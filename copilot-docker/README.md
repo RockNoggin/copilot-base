@@ -7,22 +7,26 @@ Run GitHub Copilot CLI in **YOLO mode** (`--yolo`) inside a Docker container, co
 ## Prerequisites
 
 - **Docker Desktop** running on Windows
-- **GitHub token** with Copilot access (`GH_TOKEN` environment variable)
-- **PowerShell 5.1+** (ships with Windows)
+- **GitHub CLI (`gh`)** authenticated (`gh auth login`) with a Copilot-enabled account
+- **PowerShell 7+** (or 5.1+ with Windows PowerShell)
 
 ## Setup (One-Time)
 
 ```powershell
-# 1. Set your GitHub token (add to your PowerShell profile for persistence)
-$env:GH_TOKEN = "ghp_your_token_here"
-
-# 2. Build the Docker image
+# 1. Build the Docker image
 cd D:\GIT\copilot-base\copilot-docker
 docker build -t copilot-yolo ./docker
 
-# 3. Import the PowerShell module (add to your profile for persistence)
+# 2. Add to your PowerShell profile (auto-loads module + token on every shell)
+Add-Content $PROFILE @'
+
+# GitHub Copilot Docker - YOLO mode module
 Import-Module D:\GIT\copilot-base\copilot-docker\client\copilot.psm1
+if (-not $env:GH_TOKEN) { $env:GH_TOKEN = (gh auth token 2>$null) }
+'@
 ```
+
+Restart your terminal, and all `*-Copilot*` functions are available with authentication handled automatically.
 
 ## Usage
 
