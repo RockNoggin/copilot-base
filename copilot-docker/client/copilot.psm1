@@ -216,6 +216,8 @@ function Get-CopilotContainers {
     [CmdletBinding()]
     param()
 
+    Test-DockerAvailable
+
     docker ps --filter "name=copilot-" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}\t{{.Ports}}"
 }
 

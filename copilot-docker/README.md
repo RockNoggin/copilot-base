@@ -187,7 +187,7 @@ docker sandbox create copilot ./your-project -- --yolo
 docker sandbox run copilot-your-project
 ```
 
-See the [full research report](https://docs.docker.com/ai/sandboxes/agents/copilot/) for details on Sandbox vs standard Docker tradeoffs.
+See the [Docker Sandbox documentation](https://docs.docker.com/ai/sandboxes/agents/copilot/) for details on Sandbox vs standard Docker tradeoffs.
 
 ## File Structure
 
