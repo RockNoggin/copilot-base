@@ -43,6 +43,9 @@ function Start-CopilotContainer {
         [switch]$Build
     )
 
+    if (-not (Test-Path $Workspace)) {
+        throw "Workspace path does not exist: $Workspace"
+    }
     $Workspace = (Resolve-Path $Workspace).Path
 
     if (-not $Name) {
@@ -173,9 +176,13 @@ function Stop-CopilotContainer {
     }
 
     Write-Host "Stopping container '$Name'..." -ForegroundColor Cyan
-    docker stop $Name 2>$null
-    docker rm $Name 2>$null
-    Write-Host "Container '$Name' removed." -ForegroundColor Green
+    $null = docker stop $Name 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        docker rm $Name | Out-Null
+        Write-Host "Container '$Name' removed." -ForegroundColor Green
+    } else {
+        Write-Warning "Container '$Name' was not running or does not exist."
+    }
 }
 
 function Get-CopilotContainers {

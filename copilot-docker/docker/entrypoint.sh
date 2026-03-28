@@ -9,8 +9,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
     mkdir -p "$CONFIG_DIR"
     echo '{"trusted_folders":["/workspace"]}' > "$CONFIG_FILE"
 elif ! grep -q '/workspace' "$CONFIG_FILE" 2>/dev/null; then
-    # Append /workspace to existing trusted_folders (simple jq-free approach)
-    sed -i 's|"trusted_folders":\[|"trusted_folders":["/workspace",|' "$CONFIG_FILE"
+    # Append /workspace to existing trusted_folders (jq-free, handles empty and non-empty arrays)
+    sed -i 's|"trusted_folders":\[\]|"trusted_folders":["/workspace"]|; s|"trusted_folders":\[\([^]]\)|"trusted_folders":["/workspace",\1|' "$CONFIG_FILE"
 fi
 
 # Validate authentication token
