@@ -1,0 +1,14 @@
+services:
+  copilot:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME:-copilot-workspace}
+    volumes:
+      - ${WORKSPACE_PATH:-.}:/workspace
+    environment:
+      - GH_TOKEN=${GH_TOKEN:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    restart: "no"
+    stdin_open: true
+    tty: true
