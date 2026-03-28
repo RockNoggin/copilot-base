@@ -4,34 +4,151 @@ Run GitHub Copilot CLI in **YOLO mode** (`--yolo`) inside a Docker container, co
 
 > **Why?** YOLO mode disables all permission prompts — dangerous on a host machine, but safe inside a disposable container where the blast radius is limited to your mounted project directory.
 
-## Quick Start
+## Prerequisites
+
+- **Docker Desktop** running on Windows
+- **GitHub token** with Copilot access (`GH_TOKEN` environment variable)
+- **PowerShell 5.1+** (ships with Windows)
+
+## Setup (One-Time)
 
 ```powershell
-# 1. Set your GitHub token (if not already in your environment)
+# 1. Set your GitHub token (add to your PowerShell profile for persistence)
 $env:GH_TOKEN = "ghp_your_token_here"
 
 # 2. Build the Docker image
-cd copilot-docker
+cd D:\GIT\copilot-base\copilot-docker
 docker build -t copilot-yolo ./docker
 
-# 3. Import the PowerShell module
-Import-Module ./client/copilot.psm1
+# 3. Import the PowerShell module (add to your profile for persistence)
+Import-Module D:\GIT\copilot-base\copilot-docker\client\copilot.psm1
+```
 
-# 4. Start a container for your project
+## Usage
+
+### Start a container for your project
+
+Each workspace gets its own persistent container. The container stays alive between prompts so there's no cold start.
+
+```powershell
+Start-CopilotContainer -Workspace "D:\MyProject"
+```
+
+The container is named automatically based on the folder (e.g., `copilot-myproject`). Override with `-Name`:
+
+```powershell
+Start-CopilotContainer -Workspace "D:\MyProject" -Name "copilot-frontend"
+```
+
+If the image hasn't been built yet, add `-Build`:
+
+```powershell
 Start-CopilotContainer -Workspace "D:\MyProject" -Build
+```
 
-# 5. Run a batch prompt
+### Run a batch prompt (fire-and-forget)
+
+Send a task and stream the output live. Copilot runs autonomously with `--autopilot --yolo`.
+
+```powershell
 Invoke-CopilotBatch -Workspace "D:\MyProject" -Prompt "add error handling to auth.js"
+```
 
-# 6. Or open an interactive session
+Control how many autonomous steps Copilot can take (default: 10):
+
+```powershell
+Invoke-CopilotBatch -Workspace "D:\MyProject" -Prompt "refactor the API layer" -MaxContinues 20
+```
+
+### Open an interactive session
+
+Full interactive terminal — you chat with Copilot in YOLO mode inside the container:
+
+```powershell
 Enter-CopilotSession -Workspace "D:\MyProject"
 ```
 
+Exit the session with `Ctrl+C` or `/exit`. The container stays running for future use.
+
+### List running containers
+
+```powershell
+Get-CopilotContainers
+```
+
+### Stop and clean up
+
+```powershell
+# Stop one container
+Stop-CopilotContainer -Workspace "D:\MyProject"
+
+# Or by name
+Stop-CopilotContainer -Name "copilot-frontend"
+```
+
+### Using Docker Compose (alternative)
+
+For simpler setups without the PowerShell module:
+
+```powershell
+$env:WORKSPACE_PATH = "D:\MyProject"
+$env:GH_TOKEN = "ghp_..."
+docker compose up -d
+
+# Interactive session
+docker exec -it copilot-workspace copilot --yolo
+
+# Batch prompt
+docker exec -t copilot-workspace copilot --autopilot --yolo -p "your prompt here"
+```
+
+## Typical Workflow
+
+```powershell
+# 1. Commit your work first (safety net)
+cd D:\MyProject
+git add -A && git commit -m "checkpoint before YOLO session"
+
+# 2. Start the container
+Start-CopilotContainer -Workspace "D:\MyProject"
+
+# 3. Run your task
+Invoke-CopilotBatch -Workspace "D:\MyProject" -Prompt "add unit tests for the auth module"
+
+# 4. Review what changed
+git diff
+
+# 5. Keep or discard
+git add -A && git commit -m "YOLO: added auth tests"
+# or: git checkout .
+```
+
+## Security Checklist
+
+| Practice | Priority |
+|---|---|
+| **Commit/stash before every YOLO session** | 🔴 Critical |
+| **Never hardcode tokens** — use `$env:GH_TOKEN` only | 🔴 Critical |
+| **Review `.git/hooks/`** after sessions (Copilot could inject hooks) | 🟡 High |
+| **Set `--max-autopilot-continues`** to cap runaway loops | 🟡 High |
+| **Use `--network=none`** for air-gapped runs when possible | 🟡 High |
+| **Review all file changes** before committing | 🟡 High |
+
+## PowerShell Function Reference
+
+| Function | Parameters | Description |
+|---|---|---|
+| `Start-CopilotContainer` | `-Workspace` (req), `-Name`, `-Image`, `-Build` | Start a persistent container for a workspace |
+| `Invoke-CopilotBatch` | `-Prompt` (req), `-Workspace`/`-Name`, `-MaxContinues` | Send a batch prompt, streams output live |
+| `Enter-CopilotSession` | `-Workspace`/`-Name` | Open full interactive YOLO session |
+| `Stop-CopilotContainer` | `-Workspace`/`-Name` | Stop and remove a container |
+| `Get-CopilotContainers` | (none) | List all running Copilot containers |
+
+All functions accept either `-Workspace` (auto-generates container name from folder) or `-Name` (explicit container name).
+
 ## Architecture
 
-### Option A — Thin Shell Client (Implemented)
-
-No custom server. The container is a pre-configured environment; the PowerShell client wraps `docker run` / `docker exec` directly.
+The PowerShell client wraps `docker run` / `docker exec` — no custom server required.
 
 ```
 ┌───────────────────────────────────────────────┐
@@ -51,47 +168,16 @@ No custom server. The container is a pre-configured environment; the PowerShell 
 └───────────────────────────────────────────────┘
 ```
 
-### Option B — HTTP API + SSE (Future)
+### Docker Sandbox Alternative (Recommended for Maximum Security)
 
-A Node.js server inside the container exposes `POST /run` (SSE streaming) and `WS /session` (interactive PTY relay). Enables programmatic access from any language.
-
-### Option C — Docker Sandbox (Recommended for Security)
-
-Use Docker Desktop 4.58+'s built-in Sandbox feature for microVM isolation, credential proxying, and network policies:
+Docker Desktop 4.58+ offers built-in Sandbox with microVM isolation, credential proxying, and network policies:
 
 ```bash
 docker sandbox create copilot ./your-project -- --yolo
 docker sandbox run copilot-your-project
 ```
 
-## PowerShell Functions
-
-| Function | Description |
-|---|---|
-| `Start-CopilotContainer` | Start a persistent container for a workspace |
-| `Invoke-CopilotBatch` | Send a batch prompt (streams output live) |
-| `Enter-CopilotSession` | Open interactive YOLO session |
-| `Stop-CopilotContainer` | Stop and remove a container |
-| `Get-CopilotContainers` | List running Copilot containers |
-
-## Docker Compose
-
-Alternative to the PowerShell module for simple setups:
-
-```powershell
-$env:WORKSPACE_PATH = "D:\MyProject"
-$env:GH_TOKEN = "ghp_..."
-docker compose up -d
-docker exec -it copilot-workspace copilot --yolo
-```
-
-## Security Notes
-
-- **Always commit/stash before YOLO sessions** — Copilot can delete files in the mounted workspace
-- **Never hardcode tokens** — use host environment variables only
-- **Review `.git/hooks/`** after sessions — Copilot could inject hooks
-- **Consider `--network=none`** for air-gapped runs (standard Docker shares host network)
-- **Use Docker Sandbox** (Option C) when maximum isolation is needed
+See the [full research report](https://docs.docker.com/ai/sandboxes/agents/copilot/) for details on Sandbox vs standard Docker tradeoffs.
 
 ## File Structure
 
