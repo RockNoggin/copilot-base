@@ -18,9 +18,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Copilot CLI via npm
-# NOTE: Verify the current package name — it may have changed from the preview release.
-# Alternatives: @github/copilot-cli, or install via `gh extension install github/gh-copilot`
-RUN npm install -g @githubnext/github-copilot-cli@${COPILOT_CLI_VERSION} \
+RUN npm install -g @github/copilot@${COPILOT_CLI_VERSION} \
     && npm cache clean --force
 
 # Create non-root user for running Copilot
